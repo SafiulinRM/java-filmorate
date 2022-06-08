@@ -8,9 +8,9 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class User {
-    private int id;
+    private int id = 0;
     private String email;
     private String login;
     private String name;
-    private LocalDate birthdate;
+    private LocalDate birthday;
 }

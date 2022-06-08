@@ -3,15 +3,15 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class FilmorateApplicationTests {
@@ -19,12 +19,12 @@ class FilmorateApplicationTests {
     public static String FILM_NOT_CREATE = "фильм не создался";
     public static String EXCEPTION = "Тест на пользователя не пройден";
     public static String EXCEPTION_FILM = "Тест на фильм не пройден";
-    private final LocalDate birthdate = LocalDate.of(1996, 1, 1);
+    private final LocalDate birthday = LocalDate.of(1996, 1, 1);
     private final String email = "qwerty@gmail.com";
     private final String login = "qwerty";
     private final String name = "qwerty123";
     private final String description = "qwertyqwertyqwerty";
-    private final long duration = 1000;
+    private final int duration = 1000;
     private final String bigDescription = "The film is set in Middle-earth – a land where such “goodly” races as hobbits, elves, dwarfs and men live. Since the ancient times they" +
             " have warred with orcs, goblins and trolls. At the beginning of the film we learn about the One Ring – a powerful weapon created by the Dark Lord Sauron – which" +
             " was occasionally found by Bilbo Baggins, the hobbit. On his 111th birthday Bilbo had a great party, after which he suddenly departed and left his young cousin" +
@@ -34,11 +34,11 @@ class FilmorateApplicationTests {
             " hobbits to the Rivendell where his wound was healed and the Fellowship of the Ring was formed to take the One Ring to Mordor and destroy it.";
 
     @Test
-    void testUser() {
+    void testUser() throws ValidationException {
         UserController userController = new UserController();
         User user = User.builder()
                 .id(1)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email(email)
                 .login(login)
                 .name(name)
@@ -51,27 +51,27 @@ class FilmorateApplicationTests {
         UserController userController = new UserController();
         User user = User.builder()
                 .id(1)
-                .birthdate(LocalDate.of(2023, 1, 1))
+                .birthday(LocalDate.of(2023, 1, 1))
                 .email(email)
                 .login(login)
                 .name(name)
                 .build();
-        assertNull(userController.create(user), EXCEPTION);
+        assertThrows(ValidationException.class, () -> userController.create(user), EXCEPTION_FILM);
     }
 
     @Test
-    void testEmptyNameOfUser() {
+    void testEmptyNameOfUser() throws ValidationException {
         UserController userController = new UserController();
         User user1 = User.builder()
                 .id(1)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email(email)
                 .login(login)
                 .name(null)
                 .build();
         User user2 = User.builder()
                 .id(2)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email("123@ru")
                 .login(login)
                 .name(" ")
@@ -85,28 +85,28 @@ class FilmorateApplicationTests {
         UserController userController = new UserController();
         User user1 = User.builder()
                 .id(1)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email(email)
                 .login(null)
                 .name(name)
                 .build();
         User user2 = User.builder()
                 .id(2)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email(email)
                 .login("qwe rty")
                 .name(name)
                 .build();
         User user3 = User.builder()
                 .id(3)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email(email)
                 .login("")
                 .name(name)
                 .build();
-        assertNull(userController.create(user1), EXCEPTION);
-        assertNull(userController.create(user2), EXCEPTION);
-        assertNull(userController.create(user3), EXCEPTION);
+        assertThrows(ValidationException.class, () -> userController.create(user1), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user2), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user3), EXCEPTION_FILM);
     }
 
     @Test
@@ -114,38 +114,38 @@ class FilmorateApplicationTests {
         UserController userController = new UserController();
         User user1 = User.builder()
                 .id(1)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email("qwerty.ru")
                 .login(login)
                 .name(name)
                 .build();
         User user2 = User.builder()
                 .id(2)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email(null)
                 .login(login)
                 .name(name)
                 .build();
         User user3 = User.builder()
                 .id(3)
-                .birthdate(birthdate)
+                .birthday(birthday)
                 .email("")
                 .login(login)
                 .name(name)
                 .build();
-        assertNull(userController.create(user1), EXCEPTION);
-        assertNull(userController.create(user2), EXCEPTION);
-        assertNull(userController.create(user3), EXCEPTION);
+        assertThrows(ValidationException.class, () -> userController.create(user1), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user2), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user3), EXCEPTION_FILM);
     }
 
     @Test
-    void testFilm() {
+    void testFilm() throws ValidationException {
         FilmController filmController = new FilmController();
         Film film = Film.builder()
                 .id(1)
                 .name(name)
                 .description(description)
-                .releaseDate(birthdate)
+                .releaseDate(birthday)
                 .duration(duration)
                 .build();
         assertEquals(film, filmController.create(film), FILM_NOT_CREATE);
@@ -161,7 +161,7 @@ class FilmorateApplicationTests {
                 .releaseDate(LocalDate.of(1696, 1, 1))
                 .duration(duration)
                 .build();
-        assertNull(filmController.create(film), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film), EXCEPTION_FILM);
     }
 
     @Test
@@ -171,10 +171,10 @@ class FilmorateApplicationTests {
                 .id(1)
                 .name(name)
                 .description(bigDescription)
-                .releaseDate(birthdate)
+                .releaseDate(birthday)
                 .duration(duration)
                 .build();
-        assertNull(filmController.create(film), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film), EXCEPTION_FILM);
     }
 
     @Test
@@ -184,17 +184,17 @@ class FilmorateApplicationTests {
                 .id(1)
                 .name(null)
                 .description(description)
-                .releaseDate(birthdate)
+                .releaseDate(birthday)
                 .duration(duration)
                 .build();
         Film film2 = Film.builder()
                 .id(2)
                 .name("")
                 .description(description)
-                .releaseDate(birthdate)
+                .releaseDate(birthday)
                 .duration(duration)
                 .build();
-        assertNull(filmController.create(film1), EXCEPTION_FILM);
-        assertNull(filmController.create(film2), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film1), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film2), EXCEPTION_FILM);
     }
 }

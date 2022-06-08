@@ -16,6 +16,7 @@ import java.util.Map;
 public class FilmController {
     private final LocalDate movieBirthday = LocalDate.of(1895, 12, 28);
     private final Map<Integer, Film> films = new HashMap<>();
+    private int count = 0;
 
     @GetMapping
     public Collection<Film> findAll() {
@@ -24,31 +25,29 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film create(@RequestBody Film film) {
-        try {
-            checkException(film);
-            films.put(film.getId(), film);
-            log.info("{}", film);
-            return film;
-        } catch (ValidationException e) {
-            log.warn(e.getMessage());
-            e.getMessage();
-            return null;
-        }
+    public Film create(@RequestBody Film film) throws ValidationException {
+        film.setId(++count);
+        checkException(film);
+        films.put(film.getId(), film);
+        log.info("{}", film);
+        return film;
     }
 
     @PutMapping
-    public Film put(@RequestBody Film film) {
-        try {
-            checkException(film);
-            films.put(film.getId(), film);
-            log.info("{}", film);
-            return film;
-        } catch (ValidationException e) {
-            log.warn(e.getMessage());
-            e.getMessage();
-            return null;
+    public Film put(@RequestBody Film film) throws ValidationException {
+        if (!films.containsKey(film.getId())) {
+            if (checkFilm(film)) {
+                throw new ValidationException("Фильм с названием " +
+                        film.getName() + " уже зарегистрирован под другим id.");
+            }
         }
+        if (film.getId() == 0) {
+            film.setId(++count);
+        }
+        checkException(film);
+        films.put(film.getId(), film);
+        log.info("{}", film);
+        return film;
     }
 
     private void checkException(Film film) throws ValidationException {
@@ -64,5 +63,15 @@ public class FilmController {
         if (film.getDuration() <= 0) {
             throw new ValidationException("продолжительность фильма должна быть положительной.");
         }
+    }
+
+    private boolean checkFilm(Film film) {
+        boolean nameSame = false;
+        for (Film f : films.values()) {
+            if (film.getName().equals(f.getName())) {
+                nameSame = true;
+            }
+        }
+        return nameSame;
     }
 }
