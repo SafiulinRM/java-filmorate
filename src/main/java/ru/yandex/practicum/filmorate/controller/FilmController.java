@@ -53,15 +53,19 @@ public class FilmController {
 
     private void validateFilm(Film film) {
         if (film.getName() == null || film.getName().isBlank()) {
+            log.warn("название не может быть пустым.");
             throw new ValidationException("название не может быть пустым.");
         }
         if (film.getDescription().length() > 200) {
+            log.warn("Максимальная длина описания — 200 символов, текущая: {}", film.getDescription().length());
             throw new ValidationException("Максимальная длина описания — 200 символов, текущая: " + film.getDescription().length());
         }
         if (EARLIEST_RELEASE_DATE.isAfter(film.getReleaseDate())) {
+            log.warn("Дата релиза — не раньше 28 декабря 1895 года, текущая: {}", film.getReleaseDate());
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года, текущая: " + film.getReleaseDate());
         }
         if (film.getDuration() <= 0) {
+            log.warn("Продолжительность фильма должна быть больше 0, текущая: {}", film.getDuration());
             throw new ValidationException("Продолжительность фильма должна быть больше 0, текущая: " + film.getDuration());
         }
     }
