@@ -5,8 +5,8 @@ import lombok.Data;
 
 import java.time.LocalDate;
 
-@Builder
 @Data
+@Builder
 public class Film {
     private int id = 0;
     private String name;

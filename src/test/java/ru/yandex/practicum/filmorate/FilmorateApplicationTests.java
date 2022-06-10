@@ -15,10 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class FilmorateApplicationTests {
-    public static String USER_NOT_CREATE = "пользователь не создался";
-    public static String FILM_NOT_CREATE = "фильм не создался";
-    public static String EXCEPTION = "Тест на пользователя не пройден";
-    public static String EXCEPTION_FILM = "Тест на фильм не пройден";
     private final LocalDate birthday = LocalDate.of(1996, 1, 1);
     private final String email = "qwerty@gmail.com";
     private final String login = "qwerty";
@@ -43,7 +39,7 @@ class FilmorateApplicationTests {
                 .login(login)
                 .name(name)
                 .build();
-        assertEquals(user, userController.create(user), USER_NOT_CREATE);
+        assertEquals(user, userController.create(user), "Пользователь не создался");
     }
 
     @Test
@@ -56,7 +52,7 @@ class FilmorateApplicationTests {
                 .login(login)
                 .name(name)
                 .build();
-        assertThrows(ValidationException.class, () -> userController.create(user), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user), "Тест на фильм не пройден");
     }
 
     @Test
@@ -76,8 +72,8 @@ class FilmorateApplicationTests {
                 .login(login)
                 .name(" ")
                 .build();
-        assertEquals(login, userController.create(user1).getName(), EXCEPTION);
-        assertEquals(login, userController.create(user2).getName(), EXCEPTION);
+        assertEquals(login, userController.create(user1).getName(), "Тест на пользователя не пройден");
+        assertEquals(login, userController.create(user2).getName(), "Тест на пользователя не пройден");
     }
 
     @Test
@@ -104,9 +100,9 @@ class FilmorateApplicationTests {
                 .login("")
                 .name(name)
                 .build();
-        assertThrows(ValidationException.class, () -> userController.create(user1), EXCEPTION_FILM);
-        assertThrows(ValidationException.class, () -> userController.create(user2), EXCEPTION_FILM);
-        assertThrows(ValidationException.class, () -> userController.create(user3), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user1), "Тест на фильм не пройден");
+        assertThrows(ValidationException.class, () -> userController.create(user2), "Тест на фильм не пройден");
+        assertThrows(ValidationException.class, () -> userController.create(user3), "Тест на фильм не пройден");
     }
 
     @Test
@@ -133,9 +129,9 @@ class FilmorateApplicationTests {
                 .login(login)
                 .name(name)
                 .build();
-        assertThrows(ValidationException.class, () -> userController.create(user1), EXCEPTION_FILM);
-        assertThrows(ValidationException.class, () -> userController.create(user2), EXCEPTION_FILM);
-        assertThrows(ValidationException.class, () -> userController.create(user3), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> userController.create(user1), "Тест на фильм не пройден");
+        assertThrows(ValidationException.class, () -> userController.create(user2), "Тест на фильм не пройден");
+        assertThrows(ValidationException.class, () -> userController.create(user3), "Тест на фильм не пройден");
     }
 
     @Test
@@ -148,7 +144,7 @@ class FilmorateApplicationTests {
                 .releaseDate(birthday)
                 .duration(duration)
                 .build();
-        assertEquals(film, filmController.create(film), FILM_NOT_CREATE);
+        assertEquals(film, filmController.create(film), "Фильм не внесен");
     }
 
     @Test
@@ -161,7 +157,7 @@ class FilmorateApplicationTests {
                 .releaseDate(LocalDate.of(1696, 1, 1))
                 .duration(duration)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film), "Тест на фильм не пройден");
     }
 
     @Test
@@ -174,7 +170,7 @@ class FilmorateApplicationTests {
                 .releaseDate(birthday)
                 .duration(duration)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film), "Тест на фильм не пройден");
     }
 
     @Test
@@ -194,7 +190,7 @@ class FilmorateApplicationTests {
                 .releaseDate(birthday)
                 .duration(duration)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film1), EXCEPTION_FILM);
-        assertThrows(ValidationException.class, () -> filmController.create(film2), EXCEPTION_FILM);
+        assertThrows(ValidationException.class, () -> filmController.create(film1), "Тест на фильм не пройден");
+        assertThrows(ValidationException.class, () -> filmController.create(film2), "Тест на фильм не пройден");
     }
 }
