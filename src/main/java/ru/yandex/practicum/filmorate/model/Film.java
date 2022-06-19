@@ -10,7 +10,7 @@ import java.util.Set;
 @Data
 @Builder
 public class Film implements Comparable<Film> {
-    private int id = 0;
+    private int id = -1;
     private String name;
     private String description;
     private LocalDate releaseDate;

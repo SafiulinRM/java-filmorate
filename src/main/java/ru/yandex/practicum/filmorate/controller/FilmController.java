@@ -15,6 +15,7 @@ import java.util.*;
 @RequestMapping("/films")
 public class FilmController {
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+    private static final int DEFAULT_FILMS_COUNT = 10;
     private FilmService filmService;
 
     @Autowired
@@ -24,11 +25,8 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film findById(@PathVariable int id) {
-        if (!filmService.getFilmStorage().getFilms().containsKey(id)) {
-            throw new NullPointerException("Фильм отсутствует с id: " + id);
-        }
         log.info("Получен фильм по id: {}", id);
-        return filmService.getFilmStorage().getFilm(id);
+        return filmService.getFilm(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -45,16 +43,14 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getListOfBestFilms(@RequestParam(required = false) String count) {
-        if (count == null) {
-            count = "10";
-        }
-        log.info("список из первых {} фильмов по количеству лайков", Integer.parseInt(count));
-        return filmService.getListOfBestFilms(Integer.parseInt(count));
+        int filmCount = count != null ? Integer.parseInt(count) : DEFAULT_FILMS_COUNT;
+        log.info("список из первых {} фильмов по количеству лайков", filmCount);
+        return filmService.getListOfBestFilms(filmCount);
     }
 
     @GetMapping
     public Collection<Film> findAll() {
-        Collection<Film> films = filmService.getFilmStorage().findAllFilms();
+        Collection<Film> films = filmService.findAllFilms();
         log.info("Текущее количество фильмов: {}", films.size());
         return films;
     }
@@ -62,20 +58,15 @@ public class FilmController {
     @PostMapping
     public Film create(@RequestBody Film film) {
         validateFilm(film);
-        filmService.getFilmStorage().postFilm(film);
+        filmService.postFilm(film);
         log.info("Фильм создан: {}", film);
         return film;
     }
 
     @PutMapping
     public Film put(@RequestBody Film film) {
-        Map<Integer, Film> films = filmService.getFilmStorage().getFilms();
-        if (!films.containsKey(film.getId()) && isFilmNameUnique(film)) {
-            throw new NullPointerException("Фильм с названием " +
-                    film.getName() + " уже зарегистрирован под другим id.");
-        }
         validateFilm(film);
-        filmService.getFilmStorage().putFilm(film);
+        filmService.putFilm(film);
         log.info("Фильм создан или изменен: {}", film);
         return film;
     }
@@ -97,16 +88,5 @@ public class FilmController {
             log.warn("Продолжительность фильма должна быть больше 0, текущая: {}", film.getDuration());
             throw new ValidationException("Продолжительность фильма должна быть больше 0, текущая: " + film.getDuration());
         }
-    }
-
-    private boolean isFilmNameUnique(Film film) {
-        Map<Integer, Film> films = filmService.getFilmStorage().getFilms();
-        boolean nameSame = false;
-        for (Film f : films.values()) {
-            if (film.getName().equals(f.getName())) {
-                nameSame = true;
-            }
-        }
-        return nameSame;
     }
 }

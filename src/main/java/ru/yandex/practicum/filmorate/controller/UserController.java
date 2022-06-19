@@ -23,11 +23,8 @@ public class UserController {
 
     @GetMapping("/{id}")
     public User findById(@PathVariable int id) {
-        if (!userService.getUserStorage().getUsers().containsKey(id)) {
-            throw new NullPointerException("Пользователь отсутствует с id: " + id);
-        }
         log.info("Получен пользователь по id: {}", id);
-        return userService.getUserStorage().getUser(id);
+        return userService.getUser(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -57,33 +54,24 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<User> findAll() {
-        Collection<User> users = userService.getUserStorage().findAllUsers();
+    public Collection<User> findAllUsers() {
+        Collection<User> users = userService.findAllUsers();
         log.info("Текущее количество пользователей: {}", users.size());
         return users;
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        if (isUserEmailUnique(user) && user.getId() != 0) {
-            throw new ValidationException("Пользователь с электронной почтой " +
-                    user.getEmail() + " уже зарегистрирован.");
-        }
         validateUser(user);
-        userService.getUserStorage().postUser(user);
+        userService.postUser(user);
         log.info("Пользователь создан: {}", user);
         return user;
     }
 
     @PutMapping
     public User put(@RequestBody User user) {
-        Map<Integer, User> users = userService.getUserStorage().getUsers();
-        if (!users.containsKey(user.getId()) && isUserEmailUnique(user)) {
-            throw new NullPointerException("Пользователь с электронной почтой " +
-                    user.getEmail() + " уже зарегистрирован под другим id.");
-        }
         validateUser(user);
-        userService.getUserStorage().putUser(user);
+        userService.putUser(user);
         log.info("Пользователь создан или изменен: {}", user);
         return user;
     }
@@ -104,17 +92,5 @@ public class UserController {
             log.warn("Дата рождения не может быть в будущем, текущая: {}", user.getBirthday());
             throw new ValidationException("Дата рождения не может быть в будущем, текущая: " + user.getBirthday());
         }
-    }
-
-    private boolean isUserEmailUnique(User user) {
-        Map<Integer, User> users = userService.getUserStorage().getUsers();
-        boolean emailSame = false;
-        for (User u : users.values()) {
-            if (user.getEmail().equals(u.getEmail())) {
-                emailSame = true;
-                break;
-            }
-        }
-        return emailSame;
     }
 }

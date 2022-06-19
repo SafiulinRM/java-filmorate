@@ -10,7 +10,7 @@ import java.util.Set;
 @Data
 @Builder
 public class User {
-    private int id = 0;
+    private int id = -1;
     private String email;
     private String login;
     private String name;
