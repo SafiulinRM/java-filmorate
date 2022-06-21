@@ -1,9 +1,17 @@
 package ru.yandex.practicum.filmorate.service;
 
-public class IdGenerator {
-    private int counterId = 0;
+import org.springframework.stereotype.Service;
 
-    public int generate() {
-        return ++counterId;
+@Service
+public class IdGenerator {
+    private int userId = 0;
+    private int filmId = 0;
+
+    public int generateUserId() {
+        return ++userId;
+    }
+
+    public int generateFilmId() {
+        return ++filmId;
     }
 }
