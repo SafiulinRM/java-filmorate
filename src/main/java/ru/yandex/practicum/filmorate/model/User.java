@@ -15,12 +15,11 @@ public class User {
     private String login;
     private String name;
     private LocalDate birthday;
+    private final Set<Integer> friends = new HashSet<>();
 
     public Set<Integer> getFriends() {
         return friends;
     }
-
-    private final Set<Integer> friends = new HashSet<>();
 
     public void addFriend(int friendId) {
         friends.add(friendId);
