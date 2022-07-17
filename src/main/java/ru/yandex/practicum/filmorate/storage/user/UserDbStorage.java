@@ -20,15 +20,9 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public void addFriend(long userId, long friend) {
+    public void addFriend(long userId, long friendId) {
         String sqlQuery = "insert into FRIENDSHIPS (USER_ID, FRIEND_ID) values (?, ?)";
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
-            PreparedStatement stmt = connection.prepareStatement(sqlQuery);
-            stmt.setLong(1, userId);
-            stmt.setLong(2, friend);
-            return stmt;
-        }, keyHolder);
+        jdbcTemplate.update(sqlQuery, userId, friendId);
     }
 
     @Override
@@ -79,7 +73,6 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User save(User user) {
         String sqlQuery = "insert into USERS (EMAIL, LOGIN, USER_NAME, BIRTHDAY) values (?, ?, ?, ?)";
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sqlQuery, new String[]{"USER_ID"});
@@ -101,7 +94,6 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User update(User user) {
         String sqlQuery = "merge into USERS (USER_ID, EMAIL, LOGIN, USER_NAME, BIRTHDAY) values (?, ?, ?, ?, ?)";
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sqlQuery, new String[]{"USER_ID"});
