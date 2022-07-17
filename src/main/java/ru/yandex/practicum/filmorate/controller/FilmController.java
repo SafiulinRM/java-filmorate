@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -14,61 +15,65 @@ import java.util.*;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
+    public static int DEFAULT_FILMS_COUNT = 10;
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-    private static final int DEFAULT_FILMS_COUNT = 10;
-    private FilmService filmService;
 
     @Autowired
-    public FilmController(FilmService filmService) {
-        this.filmService = filmService;
+    FilmService service;
+
+    @PostMapping
+    public Film create(@RequestBody final Film film) {
+        validateFilm(film);
+        log.info("Creating film {}", film);
+        return service.save(film);
+    }
+
+    @PutMapping
+    public Film put(@RequestBody Film film) {
+        if (film.getId() < 1) {
+            log.warn("Id не может быть меньше 1, текущий: {}", film.getId());
+            throw new NotFoundException("Id не может быть меньше 1, текущий: " + film.getId());
+        }
+        validateFilm(film);
+        service.update(film);
+        log.info("Фильм создан или изменен: {}", film);
+        return service.update(film);
     }
 
     @GetMapping("/{id}")
-    public Film findById(@PathVariable int id) {
-        log.info("Получен фильм по id: {}", id);
-        return filmService.getFilm(id);
+    public Film get(@PathVariable long id) {
+        log.info("Get film id={}", id);
+        return service.get(id);
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable int id, @PathVariable int userId) {
-        filmService.addLike(id, userId);
-        log.info("Пользователь с id: {} поставил лайк фильму с id: {}", userId, id);
-    }
-
-    @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable int id, @PathVariable int userId) {
-        filmService.removeLike(id, userId);
-        log.info("Пользователь с id: {} удалил лайк фильму с id: {}", userId, id);
+    @GetMapping
+    public List<Film> findAllUsers() {
+        List<Film> films = service.findAllFilms();
+        log.info("Текущее количество фильмов: {}", films.size());
+        return films;
     }
 
     @GetMapping("/popular")
     public List<Film> getListOfBestFilms(@RequestParam(required = false) String count) {
         int filmCount = count != null ? Integer.parseInt(count) : DEFAULT_FILMS_COUNT;
         log.info("список из первых {} фильмов по количеству лайков", filmCount);
-        return filmService.getListOfBestFilms(filmCount);
+        return service.getListOfBestFilms(filmCount);
     }
 
-    @GetMapping
-    public Collection<Film> findAll() {
-        Collection<Film> films = filmService.findAllFilms();
-        log.info("Текущее количество фильмов: {}", films.size());
-        return films;
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable int id, @PathVariable int userId) {
+        service.addLike(id, userId);
+        log.info("Пользователь с id: {} поставил лайк фильму с id: {}", userId, id);
     }
 
-    @PostMapping
-    public Film create(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.postFilm(film);
-        log.info("Фильм создан: {}", film);
-        return film;
-    }
-
-    @PutMapping
-    public Film put(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.putFilm(film);
-        log.info("Фильм создан или изменен: {}", film);
-        return film;
+    @DeleteMapping("/{id}/like/{userId}")
+    public void removeLike(@PathVariable int id, @PathVariable int userId) {
+        if (id < 1 || userId < 1) {
+            log.warn("Id не может быть меньше 1, текущий: {}, userId: {}", id, userId);
+            throw new NotFoundException("Id не может быть меньше 1, текущий: " + id + ",userId: " + userId);
+        }
+        service.removeLike(id, userId);
+        log.info("Пользователь с id: {} удалил лайк фильму с id: {}", userId, id);
     }
 
     private void validateFilm(Film film) {

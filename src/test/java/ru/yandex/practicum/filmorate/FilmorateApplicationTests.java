@@ -1,22 +1,41 @@
 package ru.yandex.practicum.filmorate;
 
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.mpaRating.MpaRatingStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class FilmorateApplicationTests {
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+class FilmoRateApplicationTests {
+    private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
+    private final MpaRatingStorage mpaRatingStorage;
+    private final FilmStorage filmStorage;
     private final LocalDate birthday = LocalDate.of(1996, 1, 1);
     private final String email = "qwerty@gmail.com";
+    private final String email2 = "update@gmail.com";
+    private final String email3 = "test@gmail.com";
     private final String login = "qwerty";
     private final String name = "qwerty123";
     private final String description = "qwertyqwertyqwerty";
@@ -28,171 +47,168 @@ class FilmorateApplicationTests {
             " that Frodo and three of his friends leave Shire. They are followed by the Black Riders, who are searching for Frodo and the Ring. On their way they meet a new" +
             " friend Aragorn. The Black Riders attacked Frodo and his friends and one of them stabbed Frodo in the shoulder with a cursed knife. Aragorn took Frodo and the" +
             " hobbits to the Rivendell where his wound was healed and the Fellowship of the Ring was formed to take the One Ring to Mordor and destroy it.";
-/*
+    private final JdbcTemplate jdbcTemplate;
+    private final MpaRating mpaRating = new MpaRating(2, "PG");
+    private final Genre drama = new Genre(2, "Драма");
+    private final List<Genre> genres = List.of(drama);
+
+
+    @BeforeEach
+    public void beforeEach() {
+        String sqlQuery = "DELETE FROM FRIENDSHIPS;DELETE FROM FILM_GENRES; DELETE FROM LIKES; DELETE FROM USERS; DELETE FROM FILMS;" +
+                " ALTER TABLE USERS ALTER COLUMN USER_ID RESTART WITH 1;\n" +
+                "ALTER TABLE FILMS ALTER COLUMN FILM_ID RESTART WITH 1;\n";
+        jdbcTemplate.update(sqlQuery);
+    }
+
+
     @Test
-    void testUser() throws ValidationException {
-        UserController userController = new UserController();
-        User user = User.builder()
-                .id(1)
-                .birthday(birthday)
-                .email(email)
-                .login(login)
-                .name(name)
-                .build();
-        assertEquals(user, userController.create(user), "Пользователь не создался");
+    public void testGetUserByIdAndCreate() {
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User user = userStorage.getUserById(1);
+        assertEquals(1, user.getId(), "Юзер не создался!");
     }
 
     @Test
-    void testWrongBirthdayOfUser() {
-        UserController userController = new UserController();
-        User user = User.builder()
-                .id(1)
-                .birthday(LocalDate.of(2023, 1, 1))
-                .email(email)
-                .login(login)
-                .name(name)
-                .build();
-        assertThrows(ValidationException.class, () -> userController.create(user), "Тест на фильм не пройден");
+    public void testUpdateUser() {
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User updateUser = new User(1, email2, login, name, birthday);
+        userStorage.update(updateUser);
+        List<User> users = userStorage.getAllUsers();
+        assertEquals(1, users.size());
+        assertEquals(email2, users.get(0).getEmail(), "Юзер не обновился!");
+
     }
 
     @Test
-    void testEmptyNameOfUser() throws ValidationException {
-        UserController userController = new UserController();
-        User user1 = User.builder()
-                .id(1)
-                .birthday(birthday)
-                .email(email)
-                .login(login)
-                .name(null)
-                .build();
-        User user2 = User.builder()
-                .id(2)
-                .birthday(birthday)
-                .email("123@ru")
-                .login(login)
-                .name(" ")
-                .build();
-        assertEquals(login, userController.create(user1).getName(), "Тест на пользователя не пройден");
-        assertEquals(login, userController.create(user2).getName(), "Тест на пользователя не пройден");
+    public void testGetAllUsers() {
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        List<User> users = userStorage.getAllUsers();
+        assertEquals(testUser, users.get(0), "Не удалось получить всех юзеров!");
     }
 
     @Test
-    void testWrongLoginOfUser() {
-        UserController userController = new UserController();
-        User user1 = User.builder()
-                .id(1)
-                .birthday(birthday)
-                .email(email)
-                .login(null)
-                .name(name)
-                .build();
-        User user2 = User.builder()
-                .id(2)
-                .birthday(birthday)
-                .email(email)
-                .login("qwe rty")
-                .name(name)
-                .build();
-        User user3 = User.builder()
-                .id(3)
-                .birthday(birthday)
-                .email(email)
-                .login("")
-                .name(name)
-                .build();
-        assertThrows(ValidationException.class, () -> userController.create(user1), "Тест на фильм не пройден");
-        assertThrows(ValidationException.class, () -> userController.create(user2), "Тест на фильм не пройден");
-        assertThrows(ValidationException.class, () -> userController.create(user3), "Тест на фильм не пройден");
+    public void testAddFriendAndGetFriends() {
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User testUser2 = new User(email2, login, name, birthday);
+        userStorage.save(testUser2);
+        userStorage.addFriend(1, 2);
+        assertEquals(testUser2, userStorage.getFriends(1).get(0), "Не удалось получить друзей!");
     }
 
     @Test
-    void testWrongEmailOfUser() {
-        UserController userController = new UserController();
-        User user1 = User.builder()
-                .id(1)
-                .birthday(birthday)
-                .email("qwerty.ru")
-                .login(login)
-                .name(name)
-                .build();
-        User user2 = User.builder()
-                .id(2)
-                .birthday(birthday)
-                .email(null)
-                .login(login)
-                .name(name)
-                .build();
-        User user3 = User.builder()
-                .id(3)
-                .birthday(birthday)
-                .email("")
-                .login(login)
-                .name(name)
-                .build();
-        assertThrows(ValidationException.class, () -> userController.create(user1), "Тест на фильм не пройден");
-        assertThrows(ValidationException.class, () -> userController.create(user2), "Тест на фильм не пройден");
-        assertThrows(ValidationException.class, () -> userController.create(user3), "Тест на фильм не пройден");
+    public void testRemoveFriends() {
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User testUser2 = new User(email2, login, name, birthday);
+        userStorage.save(testUser2);
+        userStorage.addFriend(1, 2);
+        assertEquals(testUser2, userStorage.getFriends(1).get(0));
+        userStorage.removeFriend(1, 2);
+        assertEquals(0, userStorage.getFriends(1).size(), "Друг не удалился");
     }
 
     @Test
-    void testFilm() throws ValidationException {
-        FilmController filmController = new FilmController();
-        Film film = Film.builder()
-                .id(1)
-                .name(name)
-                .description(description)
-                .releaseDate(birthday)
-                .duration(duration)
-                .build();
-        assertEquals(film, filmController.create(film), "Фильм не внесен");
+    public void testGetListOfMutualFriends() {
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User testUser2 = new User(email2, login, name, birthday);
+        userStorage.save(testUser2);
+        User testUser3 = new User(email3, login, name, birthday);
+        userStorage.save(testUser3);
+        userStorage.addFriend(1, 3);
+        userStorage.addFriend(2, 3);
+        assertEquals(testUser3, userStorage.getListOfMutualFriends(1, 2).get(0), " Не получилось найти общих друзей!");
     }
 
     @Test
-    void testWrongReleaseDateOfFilm() {
-        FilmController filmController = new FilmController();
-        Film film = Film.builder()
-                .id(1)
-                .name(name)
-                .description(description)
-                .releaseDate(LocalDate.of(1696, 1, 1))
-                .duration(duration)
-                .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film), "Тест на фильм не пройден");
+    public void testGetByIdGenre() {
+        assertEquals(drama, genreStorage.getById(2), "Не удалось получить жанр");
     }
 
     @Test
-    void testWrongDescriptionOfFilm() {
-        FilmController filmController = new FilmController();
-        Film film = Film.builder()
-                .id(1)
-                .name(name)
-                .description(bigDescription)
-                .releaseDate(birthday)
-                .duration(duration)
-                .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film), "Тест на фильм не пройден");
+    public void testGetAllGenres() {
+        assertEquals(6, genreStorage.getAll().size(), "Не удалось получить жанры");
     }
 
     @Test
-    void testEmptyNameOfFilm() {
-        FilmController filmController = new FilmController();
-        Film film1 = Film.builder()
-                .id(1)
-                .name(null)
-                .description(description)
-                .releaseDate(birthday)
-                .duration(duration)
-                .build();
-        Film film2 = Film.builder()
-                .id(2)
-                .name("")
-                .description(description)
-                .releaseDate(birthday)
-                .duration(duration)
-                .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film1), "Тест на фильм не пройден");
-        assertThrows(ValidationException.class, () -> filmController.create(film2), "Тест на фильм не пройден");
+    public void testGetByIdMpa() {
+        assertEquals(mpaRating, mpaRatingStorage.getById(2), "Не удалось получить mpa");
     }
 
- */
-}
+    @Test
+    public void testGetAllMpa() {
+        assertEquals(5, mpaRatingStorage.getAll().size(), "Не удалось получить mpa рейтинги");
+    }
+
+    @Test
+    public void testGetFilmByIdAndCreate() {
+        Film testFilm = new Film(name, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm);
+        Film film = filmStorage.getById(1);
+        assertEquals(1, film.getId(), "Фильм не создался!");
+    }
+
+    @Test
+    public void testUpdateFilm() {
+        Film testFilm = new Film(name, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm);
+        Film updateFilm = new Film(1, login, description, birthday, duration, mpaRating, genres);
+        filmStorage.update(updateFilm);
+        List<Film> films = filmStorage.getAll();
+        assertEquals(1, films.size());
+        assertEquals(login, films.get(0).getName(), "Фильм не обновился!");
+    }
+
+    @Test
+    public void testGetAllFilms() {
+        Film testFilm = new Film(name, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm);
+        Film updateFilm = new Film(1, login, description, birthday, duration, mpaRating, genres);
+        List<Film> films = filmStorage.getAll();
+        assertEquals(testFilm, films.get(0), "Не удалось получить все фильмы!");
+    }
+
+    @Test
+    public void testAddLikeAndGetListOfBestFilms() {
+        Film testFilm = new Film(name, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm);
+        Film testFilm2 = new Film(login, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm2);
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User testUser2 = new User(email2, login, name, birthday);
+        userStorage.save(testUser2);
+        filmStorage.addLike(testFilm.getId(), testUser.getId());
+        filmStorage.addLike(testFilm.getId(), testUser2.getId());
+        filmStorage.addLike(testFilm2.getId(), testFilm.getId());
+        List<Film> bestFilms = filmStorage.getListOfBestFilms(7);
+        assertEquals(2, bestFilms.size(), "Не удалось получить список лучших фильмов!");
+        assertEquals(testFilm, bestFilms.get(0), "Не удалось получить лучший фильм!");
+    }
+
+    @Test
+    public void testRemoveLike() {
+        Film testFilm = new Film(name, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm);
+        Film testFilm2 = new Film(login, description, birthday, duration, mpaRating, genres);
+        filmStorage.save(testFilm2);
+        User testUser = new User(email, login, name, birthday);
+        userStorage.save(testUser);
+        User testUser2 = new User(email2, login, name, birthday);
+        userStorage.save(testUser2);
+        filmStorage.addLike(testFilm.getId(), testUser.getId());
+        filmStorage.addLike(testFilm.getId(), testUser2.getId());
+        filmStorage.addLike(testFilm2.getId(), testFilm.getId());
+        List<Film> bestFilms = filmStorage.getListOfBestFilms(7);
+        assertEquals(testFilm, bestFilms.get(0), "Не удалось получить лучший фильм!");
+        filmStorage.removeLike(testFilm.getId(), testUser.getId());
+        filmStorage.removeLike(testFilm.getId(), testUser2.getId());
+        List<Film> bestFilms2 = filmStorage.getListOfBestFilms(7);
+        assertEquals(testFilm2, bestFilms2.get(0), "Не удалось удалить лайки!");
+    }
+} 
