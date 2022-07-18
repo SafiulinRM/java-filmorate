@@ -20,21 +20,21 @@ public class GenreDbStorage implements GenreStorage {
     @Override
     public Genre getById(int id) {
         final String sqlQuery = "select * from GENRES where GENRE_ID = ?";
-        final List<Genre> genres = jdbcTemplate.query(sqlQuery, GenreDbStorage::makeGenre, id);
+        final List<Genre> genres = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeGenre(rs), id);
         if (genres.size() != 1) {
             throw new NotFoundException("Жанр с таким id отсутствует, текущий: " + id);
         }
         return genres.get(0);
     }
 
-    public static Genre makeGenre(ResultSet rs, int rowNum) throws SQLException {
-        return new Genre(rs.getInt("GENRE_ID"),
-                rs.getString("NAME"));
-    }
-
     @Override
     public List<Genre> getAll() {
         final String sqlQuery = "select * from GENRES ORDER BY GENRE_ID";
-        return jdbcTemplate.query(sqlQuery, GenreDbStorage::makeGenre);
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeGenre(rs));
+    }
+
+    private Genre makeGenre(ResultSet rs) throws SQLException {
+        return new Genre(rs.getInt("GENRE_ID"),
+                rs.getString("NAME"));
     }
 }

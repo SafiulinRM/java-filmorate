@@ -28,7 +28,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getFriends(long id) {
         final String sqlQuery = "select * from USERS where USER_ID IN (SELECT FRIEND_ID FROM FRIENDSHIPS WHERE USER_ID = ?)";
-        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, id);
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeUser(rs), id);
     }
 
     @Override
@@ -45,29 +45,20 @@ public class UserDbStorage implements UserStorage {
         return friendIds;
     }
 
-
     @Override
     public User getUserById(long id) {
         final String sqlQuery = "select * from USERS where USER_ID = ?";
-        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, id);
+        final List<User> users = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeUser(rs), id);
         if (users.size() != 1) {
             throw new NotFoundException("User с таким id отсутствует, текущий: " + id);
         }
         return users.get(0);
     }
 
-    static User makeUser(ResultSet rs, int rowNum) throws SQLException {
-        return new User(rs.getLong("USER_ID"),
-                rs.getString("EMAIL"),
-                rs.getString("LOGIN"),
-                rs.getString("USER_NAME"),
-                rs.getDate("BIRTHDAY").toLocalDate());
-    }
-
     @Override
     public List<User> getAllUsers() {
         final String sqlQuery = "select * from USERS";
-        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser);
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeUser(rs));
     }
 
     @Override
@@ -111,5 +102,13 @@ public class UserDbStorage implements UserStorage {
         }, keyHolder);
         user.setId(keyHolder.getKey().longValue());
         return user;
+    }
+
+    private User makeUser(ResultSet rs) throws SQLException {
+        return new User(rs.getLong("USER_ID"),
+                rs.getString("EMAIL"),
+                rs.getString("LOGIN"),
+                rs.getString("USER_NAME"),
+                rs.getDate("BIRTHDAY").toLocalDate());
     }
 }

@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
-import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -27,7 +26,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film getById(long id) {
         final String sqlQuery = "select * from FILMS where FILM_ID = ?";
-        final List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm, id);
+        final List<Film> films = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), id);
         if (films.size() != 1) {
             throw new NotFoundException("Фильма с таким id отсутствует, текущий: " + id);
         }
@@ -36,37 +35,10 @@ public class FilmDbStorage implements FilmStorage {
         return films.get(0);
     }
 
-    static String getNameMpa(ResultSet rs, int rowNum) throws SQLException {
-        return rs.getString("NAME");
-    }
-
-    private String getNameMpaById(int id) {
-        final String sqlQueryMpa = "select NAME from MPA_RATINGS where MPA_RATING_ID = ?";
-        final List<String> mpa = jdbcTemplate.query(sqlQueryMpa, FilmDbStorage::getNameMpa, id);
-        return mpa.get(0);
-    }
-
-    static Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
-        return new Film(rs.getLong("FILM_ID"),
-                rs.getString("NAME"),
-                rs.getString("DESCRIPTION"),
-                rs.getDate("RELEASE_DATE").toLocalDate(),
-                rs.getInt("DURATION"),
-                new MpaRating(rs.getInt("MPA_RATING_ID"), null),
-                null
-        );
-    }
-
-    private List<Genre> getGenresByIdUser(long id) {
-        final String sqlQuery = "select * from GENRES where GENRE_ID IN (select GENRE_ID FROM FILM_GENRES WHERE FILM_ID = ?)";
-        final List<Genre> genres = jdbcTemplate.query(sqlQuery, GenreDbStorage::makeGenre, id);
-        return genres;
-    }
-
     @Override
     public List<Film> getAll() {
         final String sqlQuery = "select * from FILMS";
-        List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm);
+        List<Film> films = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs));
         for (Film film : films) {
             film.setGenres(getGenresByIdUser(film.getId()));
             film.getMpa().setName(getNameMpaById(film.getMpa().getId()));
@@ -158,11 +130,43 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getListOfBestFilms(int count) {
         final String sqlQuery = "select F.* from FILMS AS F LEFT JOIN LIKES AS L ON F.FILM_ID = L.FILM_ID" +
                 " GROUP BY F.FILM_ID ORDER BY COUNT(LIKE_ID) DESC LIMIT ?";
-        List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm, count);
+        List<Film> films = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeFilm(rs), count);
         for (Film film : films) {
             film.setGenres(getGenresByIdUser(film.getId()));
             film.getMpa().setName(getNameMpaById(film.getMpa().getId()));
         }
         return films;
+    }
+
+    private Film makeFilm(ResultSet rs) throws SQLException {
+        return new Film(rs.getLong("FILM_ID"),
+                rs.getString("NAME"),
+                rs.getString("DESCRIPTION"),
+                rs.getDate("RELEASE_DATE").toLocalDate(),
+                rs.getInt("DURATION"),
+                new MpaRating(rs.getInt("MPA_RATING_ID"), null),
+                null
+        );
+    }
+
+    private String getNameMpa(ResultSet rs) throws SQLException {
+        return rs.getString("NAME");
+    }
+
+    private String getNameMpaById(int id) {
+        final String sqlQueryMpa = "select NAME from MPA_RATINGS where MPA_RATING_ID = ?";
+        final List<String> mpa = jdbcTemplate.query(sqlQueryMpa, (rs, rowNum) -> getNameMpa(rs), id);
+        return mpa.get(0);
+    }
+
+    private List<Genre> getGenresByIdUser(long id) {
+        final String sqlQuery = "select * from GENRES where GENRE_ID IN (select GENRE_ID FROM FILM_GENRES WHERE FILM_ID = ?)";
+        final List<Genre> genres = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeGenre(rs), id);
+        return genres;
+    }
+
+    private Genre makeGenre(ResultSet rs) throws SQLException {
+        return new Genre(rs.getInt("GENRE_ID"),
+                rs.getString("NAME"));
     }
 }

@@ -20,21 +20,21 @@ public class MpaRatingDbStorage implements MpaRatingStorage {
     @Override
     public MpaRating getById(int id) {
         final String sqlQuery = "select * from MPA_RATINGS where MPA_RATING_ID = ?";
-        final List<MpaRating> mpaRatings = jdbcTemplate.query(sqlQuery, MpaRatingDbStorage::makeMpaRating, id);
+        final List<MpaRating> mpaRatings = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeMpaRating(rs), id);
         if (mpaRatings.size() != 1) {
             throw new NotFoundException("Рейтинга с таким id отсутствует, текущий: " + id);
         }
         return mpaRatings.get(0);
     }
 
-    static MpaRating makeMpaRating(ResultSet rs, int rowNum) throws SQLException {
-        return new MpaRating(rs.getInt("MPA_RATING_ID"),
-                rs.getString("NAME"));
-    }
-
     @Override
     public List<MpaRating> getAll() {
         final String sqlQuery = "select * from MPA_RATINGS";
-        return jdbcTemplate.query(sqlQuery, MpaRatingDbStorage::makeMpaRating);
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeMpaRating(rs));
+    }
+
+    private MpaRating makeMpaRating(ResultSet rs) throws SQLException {
+        return new MpaRating(rs.getInt("MPA_RATING_ID"),
+                rs.getString("NAME"));
     }
 }
