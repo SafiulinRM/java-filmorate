@@ -18,14 +18,19 @@ public class FilmController {
     public static int DEFAULT_FILMS_COUNT = 10;
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
+
+   private final FilmService filmService;
+
     @Autowired
-    FilmService service;
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
 
     @PostMapping
     public Film create(@RequestBody final Film film) {
         validateFilm(film);
         log.info("Creating film {}", film);
-        return service.save(film);
+        return filmService.save(film);
     }
 
     @PutMapping
@@ -35,20 +40,20 @@ public class FilmController {
             throw new NotFoundException("Id не может быть меньше 1, текущий: " + film.getId());
         }
         validateFilm(film);
-        service.update(film);
+        filmService.update(film);
         log.info("Фильм создан или изменен: {}", film);
-        return service.update(film);
+        return filmService.update(film);
     }
 
     @GetMapping("/{id}")
     public Film get(@PathVariable long id) {
         log.info("Get film id={}", id);
-        return service.get(id);
+        return filmService.get(id);
     }
 
     @GetMapping
     public List<Film> findAllUsers() {
-        List<Film> films = service.findAllFilms();
+        List<Film> films = filmService.findAllFilms();
         log.info("Текущее количество фильмов: {}", films.size());
         return films;
     }
@@ -57,12 +62,12 @@ public class FilmController {
     public List<Film> getListOfBestFilms(@RequestParam(required = false) String count) {
         int filmCount = count != null ? Integer.parseInt(count) : DEFAULT_FILMS_COUNT;
         log.info("список из первых {} фильмов по количеству лайков", filmCount);
-        return service.getListOfBestFilms(filmCount);
+        return filmService.getListOfBestFilms(filmCount);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable int id, @PathVariable int userId) {
-        service.addLike(id, userId);
+        filmService.addLike(id, userId);
         log.info("Пользователь с id: {} поставил лайк фильму с id: {}", userId, id);
     }
 
@@ -72,7 +77,7 @@ public class FilmController {
             log.warn("Id не может быть меньше 1, текущий: {}, userId: {}", id, userId);
             throw new NotFoundException("Id не может быть меньше 1, текущий: " + id + ",userId: " + userId);
         }
-        service.removeLike(id, userId);
+        filmService.removeLike(id, userId);
         log.info("Пользователь с id: {} удалил лайк фильму с id: {}", userId, id);
     }
 

@@ -15,18 +15,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/genres")
 public class GenreController {
+    private final GenreService genreService;
+
     @Autowired
-    GenreService service;
+    public GenreController(GenreService genreService) {
+        this.genreService = genreService;
+    }
 
     @GetMapping("/{id}")
     public Genre get(@PathVariable int id) {
         log.info("Get genre id={}", id);
-        return service.get(id);
+        return genreService.get(id);
     }
 
     @GetMapping
     public List<Genre> findAllGenres() {
-        List<Genre> genres = service.findAllGenres();
+        List<Genre> genres = genreService.findAllGenres();
         log.info("Текущее количество жанров: {}", genres.size());
         return genres;
     }

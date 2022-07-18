@@ -9,39 +9,42 @@ import java.util.List;
 
 @Service
 public class UserService {
+    private final UserStorage userStorage;
 
     @Autowired
-    UserStorage repository;
+    public UserService(UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public void addFriend(long id, long friendId) {
-        repository.addFriend(id, friendId);
+        userStorage.addFriend(id, friendId);
     }
 
     public List<User> getFriends(long id) {
-        return repository.getFriends(id);
+        return userStorage.getFriends(id);
     }
 
     public void removeFriend(long id, long friendId) {
-        repository.removeFriend(id, friendId);
+        userStorage.removeFriend(id, friendId);
     }
 
     public List<User> getListOfMutualFriends(long id, long otherId) {
-        return repository.getListOfMutualFriends(id, otherId);
+        return userStorage.getListOfMutualFriends(id, otherId);
     }
 
     public User save(User user) {
-        return repository.save(user);
+        return userStorage.save(user);
     }
 
     public User update(User user) {
-        return repository.update(user);
+        return userStorage.update(user);
     }
 
     public List<User> findAllUsers() {
-        return repository.getAllUsers();
+        return userStorage.getAllUsers();
     }
 
     public User get(long id) {
-        return repository.getUserById(id);
+        return userStorage.getUserById(id);
     }
 }

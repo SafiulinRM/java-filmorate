@@ -8,15 +8,19 @@ import ru.yandex.practicum.filmorate.storage.mpaRating.MpaRatingStorage;
 import java.util.List;
 
 @Service
-public class MpaService {
+public class MpaRatingService {
+    private final MpaRatingStorage mpaRatingStorage;
+
     @Autowired
-    MpaRatingStorage storage;
+    public MpaRatingService(MpaRatingStorage mpaRatingStorage) {
+        this.mpaRatingStorage = mpaRatingStorage;
+    }
 
     public List<MpaRating> findAllMpaRatings() {
-        return storage.getAll();
+        return mpaRatingStorage.getAll();
     }
 
     public MpaRating get(int id) {
-        return storage.getById(id);
+        return mpaRatingStorage.getById(id);
     }
 }

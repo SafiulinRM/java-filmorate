@@ -17,8 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    private  final UserService userService;
+
     @Autowired
-    UserService service;
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PutMapping("/{id}/friends/{friendId}")
     public void addFriend(@PathVariable long id, @PathVariable long friendId) {
@@ -26,24 +30,24 @@ public class UserController {
             log.warn("Id не может быть меньше 1, текущий id: {}, friendId: {}", id, friendId);
             throw new NotFoundException("Id не может быть меньше 1, текущий: " + id + " friendId: " + friendId);
         }
-        service.addFriend(id, friendId);
+        userService.addFriend(id, friendId);
         log.info("Пользователю с id: {} добавлен друг с id: {}", id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public void removeFriend(@PathVariable int id, @PathVariable int friendId) {
-        service.removeFriend(id, friendId);
+        userService.removeFriend(id, friendId);
         log.info("Пользователь с id: {} удалил друга с id: {}", id, friendId);
     }
 
     @GetMapping("/{id}/friends")
     public List<User> getFriends(@PathVariable long id) {
-        return service.getFriends(id);
+        return userService.getFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public List<User> getListOfMutualFriends(@PathVariable int id, @PathVariable int otherId) {
-        List<User> friends = service.getListOfMutualFriends(id, otherId);
+        List<User> friends = userService.getListOfMutualFriends(id, otherId);
         log.info("Текущее количество общих друзей: {}", friends.size());
         return friends;
     }
@@ -52,7 +56,7 @@ public class UserController {
     public User create(@RequestBody User user) {
         validateUser(user);
         log.info("Creating user {}", user);
-        return service.save(user);
+        return userService.save(user);
     }
 
     @PutMapping
@@ -62,7 +66,7 @@ public class UserController {
             throw new NotFoundException("Id не может быть меньше 1, текущий: " + user.getId());
         }
         validateUser(user);
-        service.update(user);
+        userService.update(user);
         log.info("Пользователь создан или изменен: {}", user);
         return user;
     }
@@ -74,12 +78,12 @@ public class UserController {
             throw new NotFoundException("Id не может быть меньше 1, текущий: " + id);
         }
         log.info("Get user id={}", id);
-        return service.get(id);
+        return userService.get(id);
     }
 
     @GetMapping
     public List<User> findAllUsers() {
-        List<User> users = service.findAllUsers();
+        List<User> users = userService.findAllUsers();
         log.info("Текущее количество пользователей: {}", users.size());
         return users;
     }

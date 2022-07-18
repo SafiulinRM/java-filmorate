@@ -10,13 +10,17 @@ import java.util.List;
 @Service
 public class GenreService {
     @Autowired
-    GenreStorage storage;
+    private final GenreStorage genreStorage;
+
+    public GenreService(GenreStorage genreStorage) {
+        this.genreStorage = genreStorage;
+    }
 
     public List<Genre> findAllGenres() {
-        return storage.getAll();
+        return genreStorage.getAll();
     }
 
     public Genre get(int id) {
-        return storage.getById(id);
+        return genreStorage.getById(id);
     }
 }
