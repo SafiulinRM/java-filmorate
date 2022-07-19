@@ -1,34 +1,35 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private UserService userService;
+    private  final UserService userService;
 
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    @GetMapping("/{id}")
-    public User findById(@PathVariable int id) {
-        log.info("Получен пользователь по id: {}", id);
-        return userService.getUser(id);
-    }
-
     @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable int id, @PathVariable int friendId) {
+    public void addFriend(@PathVariable long id, @PathVariable long friendId) {
+        if (id < 1 || friendId < 1) {
+            log.warn("Id не может быть меньше 1, текущий id: {}, friendId: {}", id, friendId);
+            throw new NotFoundException("Id не может быть меньше 1, текущий: " + id + " friendId: " + friendId);
+        }
         userService.addFriend(id, friendId);
         log.info("Пользователю с id: {} добавлен друг с id: {}", id, friendId);
     }
@@ -40,10 +41,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> getListOfFriends(@PathVariable int id) {
-        List<User> friends = userService.getListOfFriends(id);
-        log.info("Текущее количество друзей: {}", friends.size());
-        return friends;
+    public List<User> getFriends(@PathVariable long id) {
+        return userService.getFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
@@ -53,27 +52,40 @@ public class UserController {
         return friends;
     }
 
-    @GetMapping
-    public Collection<User> findAllUsers() {
-        Collection<User> users = userService.findAllUsers();
-        log.info("Текущее количество пользователей: {}", users.size());
-        return users;
-    }
-
     @PostMapping
     public User create(@RequestBody User user) {
         validateUser(user);
-        userService.postUser(user);
-        log.info("Пользователь создан: {}", user);
-        return user;
+        log.info("Creating user {}", user);
+        return userService.save(user);
     }
 
     @PutMapping
     public User put(@RequestBody User user) {
+        if (user.getId() < 1) {
+            log.warn("Id не может быть меньше 1, текущий: {}", user.getId());
+            throw new NotFoundException("Id не может быть меньше 1, текущий: " + user.getId());
+        }
         validateUser(user);
-        userService.putUser(user);
+        userService.update(user);
         log.info("Пользователь создан или изменен: {}", user);
         return user;
+    }
+
+    @GetMapping("/{id}")
+    public User get(@PathVariable long id) {
+        if (id < 1) {
+            log.warn("Id не может быть меньше 1, текущий: {}", id);
+            throw new NotFoundException("Id не может быть меньше 1, текущий: " + id);
+        }
+        log.info("Get user id={}", id);
+        return userService.get(id);
+    }
+
+    @GetMapping
+    public List<User> findAllUsers() {
+        List<User> users = userService.findAllUsers();
+        log.info("Текущее количество пользователей: {}", users.size());
+        return users;
     }
 
     private void validateUser(User user) {
